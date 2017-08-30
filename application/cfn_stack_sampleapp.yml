@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Deploys an Elastic Load Balancer for Manup Application."
+Parameters:
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Choose which VPC the security groups should be deployed to.
+
+  Subnets:
+    Description: Choose which subnets the Load Balancer should be deployed to.
+    Type: List<AWS::EC2::Subnet::Id>
+ 
+  AMIImageId:
+    Description: Latest Pre-baked AMI.
+    AllowedPattern: '^(?:(ami-[a-f0-9]+)?)$'
+    Type: String
+    
+  SchemeType:
+    Type: String
+    AllowedValues: [ "internal", "internet-facing" ]
+
+Mappings:
+  EnvMap:
+    ap-southeast-2:
+      ManupInstanceName: Manup-Application
+      ManupInstanceType: t2.micro
+      ManupKeyName: iress-development
+      ManupSubnetId: subnet-82a0bee6
+
+Resources:
+  ManupLoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      VpcId: !Ref VpcId
+      GroupDescription: Access to the load balancer that sits in front of Manup Application
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+      Tags: 
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-LoadBalancers"
+
+  ManupLoadBalancer:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Scheme: !Ref SchemeType
+      Instances:
+        - Ref: ManupInstance
+      Subnets: !Ref Subnets
+      HealthCheck:
+        Target: 'HTTP:80/'
+        HealthyThreshold: '2'
+        UnhealthyThreshold: '2'
+        Interval: '120'
+        Timeout: '60'
+      ConnectionDrainingPolicy:
+        Enabled: 'true'
+        Timeout: '600'
+      CrossZone: 'true'
+      SecurityGroups: 
+        - !Ref ManupLoadBalancerSecurityGroup
+      Listeners:
+        - LoadBalancerPort: '80'
+          InstancePort: '80'
+          Protocol: HTTP
+      Tags: 
+        - Key: Name
+          Value: Manup-LoadBalancer
+
+  ManupInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AMIImageId
+      InstanceType: !FindInMap [EnvMap, !Ref "AWS::Region", ManupInstanceType]
+      KeyName: !FindInMap [EnvMap, !Ref "AWS::Region", ManupKeyName]
+      SecurityGroupIds:
+        - !Ref ManupSecurityGroup
+      SubnetId: !FindInMap [EnvMap, !Ref "AWS::Region", ManupSubnetId]
+      Tags: 
+        - Key: Name
+          Value: !FindInMap [EnvMap, !Ref "AWS::Region", ManupInstanceName]
+
+  ManupSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      VpcId: !Ref VpcId
+      GroupDescription: Access to Manup Application
+      SecurityGroupIngress:
+        - CidrIp: 10.196.0.0/18
+          IpProtocol: -1
+        - CidrIp: 172.16.0.0/12
+          IpProtocol: -1
+      Tags: 
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ManupApplication"
+
+Outputs:
+  ManupInstance:
+    Value: !Ref ManupInstance
+    Export:
+      Name: !Sub "${AWS::StackName}::ManupInstance"
+
+  ManupLoadBalancer:
+    Value: !Ref ManupLoadBalancer
+    Export:
+      Name: !Sub "${AWS::StackName}::ManupLoadBalancer"
+
+  ManupLoadBalancerUrl:
+    Value: !GetAtt ManupLoadBalancer.DNSName
+    Export:
+      Name: !Sub "${AWS::StackName}::ManupLoadBalancerUrl"
+
+  ManupLoadBalancerSecurityGroup:
+    Description: A reference to the security group for Manup load balancers
+    Value: !Ref ManupLoadBalancerSecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}::ManupLoadBalancerSecurityGroup"
+
