@@ -32,8 +32,8 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref VpcId
-      GroupDescription: > Access to the load balancer that
-                          sits in front of Sample Application
+      GroupDescription: Access to the load balancer that
+                        sits in front of Sample Application
       SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0
           IpProtocol: tcp
