@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Deploys an Elastic Load Balancer for Manup Application."
+Description: "Deploys an Elastic Load Balancer for Sample Application."
 Parameters:
 
   VpcId:
@@ -22,17 +22,17 @@ Parameters:
 Mappings:
   EnvMap:
     ap-southeast-2:
-      ManupInstanceName: Manup-Application
-      ManupInstanceType: t2.micro
-      ManupKeyName: iress-development
-      ManupSubnetId: subnet-82a0bee6
+      SampleInstanceName: Sample-Application
+      SampleInstanceType: t2.medium
+      SampleKeyName: iress-development
+      SampleSubnetId: subnet-82a0bee6
 
 Resources:
-  ManupLoadBalancerSecurityGroup:
+  SampleLoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       VpcId: !Ref VpcId
-      GroupDescription: Access to the load balancer that sits in front of Manup Application
+      GroupDescription: Access to the load balancer that sits in front of Sample Application
       SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0
           IpProtocol: tcp
@@ -42,12 +42,12 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-LoadBalancers"
 
-  ManupLoadBalancer:
+  SampleLoadBalancer:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
     Properties:
       Scheme: !Ref SchemeType
       Instances:
-        - Ref: ManupInstance
+        - Ref: SampleInstance
       Subnets: !Ref Subnets
       HealthCheck:
         Target: 'HTTP:80/'
@@ -60,33 +60,38 @@ Resources:
         Timeout: '600'
       CrossZone: 'true'
       SecurityGroups: 
-        - !Ref ManupLoadBalancerSecurityGroup
+        - !Ref SampleLoadBalancerSecurityGroup
       Listeners:
         - LoadBalancerPort: '80'
           InstancePort: '80'
           Protocol: HTTP
       Tags: 
         - Key: Name
-          Value: Manup-LoadBalancer
+          Value: Sample-LoadBalancer
 
-  ManupInstance:
+  SampleInstance:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref AMIImageId
-      InstanceType: !FindInMap [EnvMap, !Ref "AWS::Region", ManupInstanceType]
-      KeyName: !FindInMap [EnvMap, !Ref "AWS::Region", ManupKeyName]
+      InstanceType: !FindInMap [EnvMap, !Ref "AWS::Region", SampleInstanceType]
+      KeyName: !FindInMap [EnvMap, !Ref "AWS::Region", SampleKeyName]
       SecurityGroupIds:
-        - !Ref ManupSecurityGroup
-      SubnetId: !FindInMap [EnvMap, !Ref "AWS::Region", ManupSubnetId]
+        - !Ref SampleSecurityGroup
+      SubnetId: !FindInMap [EnvMap, !Ref "AWS::Region", SampleSubnetId]
+      UserData: !Base64 |
+        #!/bin/bash -x
+        sudo yum install -y docker
+        sudo service docker start
+        sudo usermod -a -G docker ec2-user
       Tags: 
         - Key: Name
-          Value: !FindInMap [EnvMap, !Ref "AWS::Region", ManupInstanceName]
+          Value: !FindInMap [EnvMap, !Ref "AWS::Region", SampleInstanceName]
 
-  ManupSecurityGroup:
+  SampleSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       VpcId: !Ref VpcId
-      GroupDescription: Access to Manup Application
+      GroupDescription: Access to Sample Application
       SecurityGroupIngress:
         - CidrIp: 10.196.0.0/18
           IpProtocol: -1
@@ -94,27 +99,27 @@ Resources:
           IpProtocol: -1
       Tags: 
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ManupApplication"
+          Value: !Sub "${AWS::StackName}-SampleApplication"
 
 Outputs:
-  ManupInstance:
-    Value: !Ref ManupInstance
+  SampleInstance:
+    Value: !Ref SampleInstance
     Export:
-      Name: !Sub "${AWS::StackName}::ManupInstance"
+      Name: !Sub "${AWS::StackName}::SampleInstance"
 
-  ManupLoadBalancer:
-    Value: !Ref ManupLoadBalancer
+  SampleLoadBalancer:
+    Value: !Ref SampleLoadBalancer
     Export:
-      Name: !Sub "${AWS::StackName}::ManupLoadBalancer"
+      Name: !Sub "${AWS::StackName}::SampleLoadBalancer"
 
-  ManupLoadBalancerUrl:
-    Value: !GetAtt ManupLoadBalancer.DNSName
+  SampleLoadBalancerUrl:
+    Value: !GetAtt SampleLoadBalancer.DNSName
     Export:
-      Name: !Sub "${AWS::StackName}::ManupLoadBalancerUrl"
+      Name: !Sub "${AWS::StackName}::SampleLoadBalancerUrl"
 
-  ManupLoadBalancerSecurityGroup:
-    Description: A reference to the security group for Manup load balancers
-    Value: !Ref ManupLoadBalancerSecurityGroup
+  SampleLoadBalancerSecurityGroup:
+    Description: A reference to the security group for Sample load balancers
+    Value: !Ref SampleLoadBalancerSecurityGroup
     Export:
-      Name: !Sub "${AWS::StackName}::ManupLoadBalancerSecurityGroup"
+      Name: !Sub "${AWS::StackName}::SampleLoadBalancerSecurityGroup"
 
