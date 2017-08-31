@@ -100,6 +100,8 @@ Resources:
           IpProtocol: -1
         - CidrIp: 172.16.0.0/12
           IpProtocol: -1
+        - CidrIp: 10.196.192.0/19
+          IpProtocol: -1
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-SampleApplication"
