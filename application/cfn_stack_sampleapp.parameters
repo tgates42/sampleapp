@@ -1,1 +1,18 @@
-{"VpcId": "vpc-c8a6f2ac", "Subnets": "subnet-485b422c,subnet-00b2bd76,subnet-7096d129", "AMIImageId": "ami-30041c53", "SchemeType": "internet-facing"}
+[
+  {
+    "ParameterKey": "VpcId",
+    "ParameterValue": "vpc-c8a6f2ac"
+  },
+  {
+    "ParameterKey": "Subnets",
+    "ParameterValue": "subnet-485b422c,subnet-00b2bd76,subnet-7096d129"
+  },
+  {
+    "ParameterKey": "AMIImageId",
+    "ParameterValue": "ami-30041c53"
+  },
+  {
+    "ParameterKey": "SchemeType",
+    "ParameterValue": "internet-facing"
+  }
+]
