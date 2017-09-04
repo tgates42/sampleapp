@@ -1,0 +1,4 @@
+name: sampleapp-baseline
+version: 1.0.0
+supports:
+  - os-family: linux
